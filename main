@@ -1,0 +1,146 @@
+install.packages("tidyverse")
+library(tidyverse)
+
+
+national <- read.csv('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us.csv')
+
+
+states <- read.csv('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv')
+
+
+counties <- read.csv('https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv')
+
+
+obs_national <- nrow(national)
+obs_states <- nrow(states)
+obs_counties <- nrow(counties)
+
+
+
+num_features_national <- ncol(national)
+num_features_states <- ncol(states)
+num_features_counties <- ncol(counties)
+
+library(dplyr)
+
+
+most_recent <- max(national$date)
+total_us_cases <- national[national$date == most_recent, 2]
+
+
+total_us_deaths <- national[national$date == most_recent, 3]
+
+highest_cases <- max(states$cases)
+state_highest_cases <- states[states$cases == highest_cases, 2]
+
+
+num_highest_state <- highest_cases
+
+
+states$ratio <- states$deaths / states$cases
+recent_dates_states <- max(states$date)
+recent_states <- states[states$date == recent_dates_states, ]
+recent_states
+highest_ratio <- max(recent_states$ratio)
+state_highest_ratio <- recent_states[recent_states$ratio == highest_ratio, 2]
+
+
+state_lowest_cases <- recent_states[recent_states$ratio == min(recent_states$ratio), 2]
+
+
+county_highest_cases <- counties[counties$date == max(counties$date), 2]
+county_highest_cases
+
+num_highest_cases_county <- max(counties$cases)
+num_highest_cases_county
+
+counties <- unite(counties, "location", county:state, sep = ", " , na.rm = TRUE, remove = FALSE)
+counties
+
+location_most_deaths <- counties[counties$deaths == max(counties$deaths), 3]
+
+
+national$new_cases <- national$cases - lag(national$cases, 1)
+
+national$new_deaths <- national$deaths - lag(national$deaths, 1)
+
+
+date_most_cases <- national[national$new_cases == max(national$new_cases, na.rm = TRUE), 1][2]
+
+
+date_most_deaths <- national[national$new_deaths == max(national$new_deaths, na.rm = TRUE), 1][2]
+
+most_deaths <- national[national$date == date_most_cases, 4]
+
+
+new_cases_plot <- plot(national$new_cases)
+
+new_deaths_plot <- plot(national$new_deaths)
+
+
+highest_case_general <- counties %>%
+  filter(date == max(date)) %>%
+  filter(cases == max(cases))
+highest_in_each_state <- highest_case_general[3]
+
+
+in_wa <- counties %>%
+  filter(state == "Washington") %>%
+  filter(cases == max(cases))
+highest_in_wa <- in_wa[3]
+highest_in_wa
+
+lowest_death_general <- counties %>%
+  filter(date == max(date)) %>%
+  filter(deaths == min(deaths))
+lowest_in_each_state <- lowest_death_general[3]
+
+
+state_0 <- lowest_death_general[4]
+num_in_wa <- length(state_0[state_0 == 'Washington'])
+counties$state == 'Washington'
+counties[counties$state == 'Washington', ]
+total_in_wa <- length(counties[counties$state == 'Washington', ])
+wa_prop_no_deaths <- num_in_wa / total_in_wa
+wa_prop_no_deaths
+
+
+
+
+state_by_day <- sum(states$cases)
+states$totals <- state_by_day
+state_by_day
+
+county_by_day <- sum(counties$cases)
+counties$totals <- county_by_day
+county_by_day
+
+rbind(state_by_day, county_by_day)
+
+
+all_totals <- sum(national$cases)
+all_totals
+
+num_state_diff <- all_totals - state_by_day
+
+
+num_county_diff <- all_totals - county_by_day
+
+
+sum_county_to_state <- counties %>%
+  filter(date) %>%
+  filter(state) %>%
+  fitler(county_totals)
+sum_county_to_state <- counties[c(1,4,10)]
+sum_county_to_state
+
+sum_state <- states[c(1, 2, 9)]
+sum_state
+
+joined_states <- rbind(sum_county_to_state, sum_state)
+joined_states
+ 
+has_discrepancy <- joined_states[joined_states$totals == 0, ]
+has_discrepancy
+
+states_highest_difference <- joined_states$state
